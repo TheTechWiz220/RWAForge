@@ -59,16 +59,33 @@ describe("rwa_tokenization", () => {
     const mint = Keypair.generate().publicKey;
     const wallet = issuer.publicKey;
 
+    const [hookConfig] = PublicKey.findProgramAddressSync(
+      [Buffer.from("hook_config")],
+      hookProgram.programId
+    );
+
+    await hookProgram.methods
+      .initializeConfig()
+      .accountsPartial({
+        authority: authority.publicKey,
+        hookConfig,
+        complianceOfficer: authority.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
     const [kycRecord] = PublicKey.findProgramAddressSync(
       [Buffer.from("kyc"), wallet.toBuffer(), mint.toBuffer()],
       hookProgram.programId
     );
 
+    const expiresAt = new anchor.BN(Math.floor(Date.now() / 1000) + 86400 * 365);
+
     await hookProgram.methods
-      .registerKyc()
+      .registerKyc(0, 840, expiresAt)
       .accountsPartial({
         authority: authority.publicKey,
-        platformAuthority: authority.publicKey,
+        hookConfig,
         wallet,
         mint,
         kycRecord,
