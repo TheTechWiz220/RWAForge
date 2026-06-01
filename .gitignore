@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+target/
+.anchor/
+dist/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Anchor / Solana
+test-ledger/
+*.so
+keypairs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+frontend/.next/
+frontend/out/
+
+# Logs
+*.log
