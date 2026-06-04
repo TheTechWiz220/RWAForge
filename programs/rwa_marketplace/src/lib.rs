@@ -23,7 +23,7 @@ pub mod rwa_marketplace {
         market.listing_count = 0;
         market.listing_counter = 0;
         market.bump = ctx.bumps.marketplace;
-        Ok(())
+        Ok(());
     }
 
     /// Seller escrows RWA tokens; listing priced in payment mint (USDC)
@@ -34,6 +34,7 @@ pub mod rwa_marketplace {
     ) -> Result<()> {
         require!(price > 0 && amount > 0, MarketplaceError::InvalidAmount);
 
+        // Transfer RWA to escrow
         token_2022::transfer_checked(
             CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
@@ -48,6 +49,7 @@ pub mod rwa_marketplace {
             ctx.accounts.rwa_mint.decimals,
         )?;
 
+        // Initialize listing
         let listing = &mut ctx.accounts.listing;
         listing.seller = ctx.accounts.seller.key();
         listing.rwa_mint = ctx.accounts.rwa_mint.key();
@@ -60,12 +62,14 @@ pub mod rwa_marketplace {
         listing.escrow_bump = ctx.bumps.escrow_authority;
         listing.listing_id = ctx.accounts.marketplace.listing_counter;
 
+        // Update counters
         ctx.accounts.marketplace.listing_counter = ctx
             .accounts
             .marketplace
             .listing_counter
             .checked_add(1)
             .ok_or(MarketplaceError::MathOverflow)?;
+
         ctx.accounts.marketplace.listing_count = ctx
             .accounts
             .marketplace
@@ -94,6 +98,7 @@ pub mod rwa_marketplace {
             .ok_or(MarketplaceError::MathOverflow)?
             .checked_div(10_000)
             .ok_or(MarketplaceError::MathOverflow)? as u64;
+
         let seller_proceeds = total_price
             .checked_sub(fee)
             .ok_or(MarketplaceError::MathOverflow)?;
@@ -111,7 +116,7 @@ pub mod rwa_marketplace {
             seller_proceeds,
         )?;
 
-        // Platform fee -> treasury
+        // Platform fee
         if fee > 0 {
             token::transfer(
                 CpiContext::new(
@@ -126,13 +131,14 @@ pub mod rwa_marketplace {
             )?;
         }
 
-        // RWA tokens: escrow -> buyer
-        let rwa_mint = listing.rwa_mint;
+        // RWA: escrow -> buyer
         let seeds = &[
             b"escrow",
-            listing.key().as_ref(),
-            &[listing.escrow_bump],
+            ctx.accounts.seller.key().as_ref(),   // Use seller instead of listing.key()
+            ctx.accounts.rwa_mint.key().as_ref(),
+            &listing.listing_id.to_le_bytes(),
         ];
+
         token_2022::transfer_checked(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -173,11 +179,11 @@ pub mod rwa_marketplace {
             MarketplaceError::Unauthorized
         );
 
-        let listing_key = ctx.accounts.listing.key();
         let seeds = &[
             b"escrow",
-            listing_key.as_ref(),
-            &[ctx.accounts.listing.escrow_bump],
+            ctx.accounts.seller.key().as_ref(),
+            ctx.accounts.rwa_mint.key().as_ref(),
+            &ctx.accounts.listing.listing_id.to_le_bytes(),
         ];
 
         token_2022::transfer_checked(
@@ -215,6 +221,8 @@ pub mod rwa_marketplace {
     }
 }
 
+// ==================== ACCOUNTS ====================
+
 #[derive(Accounts)]
 pub struct InitializeMarketplace<'info> {
     #[account(mut)]
@@ -227,29 +235,39 @@ pub struct InitializeMarketplace<'info> {
         bump
     )]
     pub marketplace: Account<'info, Marketplace>,
-    /// CHECK: treasury for fees
     pub treasury: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
+#[instruction(price: u64, amount: u64)]
 pub struct CreateListing<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
+
     #[account(mut, seeds = [b"marketplace"], bump = marketplace.bump)]
     pub marketplace: Account<'info, Marketplace>,
+
     #[account(
         init,
         payer = seller,
         space = 8 + Listing::INIT_SPACE,
-        seeds = [b"listing", seller.key().as_ref(), rwa_mint.key().as_ref(), &marketplace.listing_counter.to_le_bytes()],
+        seeds = [
+            b"listing",
+            seller.key().as_ref(),
+            rwa_mint.key().as_ref(),
+            &marketplace.listing_counter.to_le_bytes()
+        ],
         bump
     )]
     pub listing: Account<'info, Listing>,
+
     pub rwa_mint: InterfaceAccount<'info, Mint>,
     pub payment_mint: Account<'info, TokenMintClassic>,
+
     #[account(mut)]
     pub seller_token_account: InterfaceAccount<'info, InterfaceTokenAccount>,
+
     #[account(
         init,
         payer = seller,
@@ -258,9 +276,18 @@ pub struct CreateListing<'info> {
         associated_token::token_program = token_program,
     )]
     pub escrow_token_account: InterfaceAccount<'info, InterfaceTokenAccount>,
-    /// CHECK: escrow PDA
-    #[account(seeds = [b"escrow", listing.key().as_ref()], bump)]
+
+    #[account(
+        seeds = [
+            b"escrow",
+            seller.key().as_ref(),
+            rwa_mint.key().as_ref(),
+            &marketplace.listing_counter.to_le_bytes()
+        ],
+        bump
+    )]
     pub escrow_authority: UncheckedAccount<'info>,
+
     pub token_program: Program<'info, Token2022>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
@@ -284,8 +311,15 @@ pub struct BuyListing<'info> {
     pub treasury_payment_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub escrow_token_account: InterfaceAccount<'info, InterfaceTokenAccount>,
-    /// CHECK: escrow authority
-    #[account(seeds = [b"escrow", listing.key().as_ref()], bump = listing.escrow_bump)]
+    #[account(
+        seeds = [
+            b"escrow",
+            seller.key().as_ref(),           // Changed here too
+            rwa_mint.key().as_ref(),
+            &listing.listing_id.to_le_bytes()
+        ],
+        bump = listing.escrow_bump
+    )]
     pub escrow_authority: UncheckedAccount<'info>,
     #[account(
         init_if_needed,
@@ -311,8 +345,15 @@ pub struct CancelListing<'info> {
     pub seller_token_account: InterfaceAccount<'info, InterfaceTokenAccount>,
     #[account(mut)]
     pub escrow_token_account: InterfaceAccount<'info, InterfaceTokenAccount>,
-    /// CHECK: escrow
-    #[account(seeds = [b"escrow", listing.key().as_ref()], bump = listing.escrow_bump)]
+    #[account(
+        seeds = [
+            b"escrow",
+            seller.key().as_ref(),
+            rwa_mint.key().as_ref(),
+            &listing.listing_id.to_le_bytes()
+        ],
+        bump = listing.escrow_bump
+    )]
     pub escrow_authority: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token2022>,
 }
@@ -324,6 +365,7 @@ pub struct UpdateListing<'info> {
     pub listing: Account<'info, Listing>,
 }
 
+// State remains the same
 #[account]
 #[derive(InitSpace)]
 pub struct Marketplace {
