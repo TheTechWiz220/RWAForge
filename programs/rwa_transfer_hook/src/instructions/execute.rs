@@ -20,7 +20,7 @@ pub struct Execute<'info> {
     pub token_program: Interface<'info, TokenInterface>,
 }
 
-pub fn execute_handler<'info>(ctx: Context<'info, Execute<'info>>) -> Result<()> {
+pub fn execute_handler<'a>(ctx: Context<'a, 'a, 'a, 'a, Execute<'a>>) -> Result<()> {
     require!(ctx.remaining_accounts.len() >= 4, HookError::MissingKycAccounts);
 
     let remaining = ctx.remaining_accounts;
@@ -33,9 +33,7 @@ pub fn execute_handler<'info>(ctx: Context<'info, Execute<'info>>) -> Result<()>
 
     require!(!hook_config.global_pause, HookError::GlobalPauseActive);
     require!(mint_compliance.transfers_enabled, HookError::TransfersDisabled);
-
-    let mint_key = ctx.accounts.mint.key();
-    require_keys_eq!(mint_compliance.mint, mint_key, HookError::KycMintMismatch);
+    require_keys_eq!(mint_compliance.mint, ctx.accounts.mint.key(), HookError::KycMintMismatch);
 
     let source_owner = get_token_account_owner(&ctx.accounts.source_token.to_account_info())?;
     let destination_owner = get_token_account_owner(&ctx.accounts.destination_token.to_account_info())?;
@@ -46,14 +44,14 @@ pub fn execute_handler<'info>(ctx: Context<'info, Execute<'info>>) -> Result<()>
     let min_tier = mint_compliance.min_tier;
     let now = Clock::get()?.unix_timestamp;
 
-    let source_kyc = validate_kyc_account(&remaining[0], source_owner, mint_key, min_tier, now, true)?;
-    let dest_kyc = validate_kyc_account(&remaining[1], destination_owner, mint_key, min_tier, now, false)?;
+    let source_kyc = validate_kyc_account(&remaining[0], source_owner, ctx.accounts.mint.key(), min_tier, now, true)?;
+    let dest_kyc = validate_kyc_account(&remaining[1], destination_owner, ctx.accounts.mint.key(), min_tier, now, false)?;
 
     emit!(TransferCompliancePassed {
-        mint: mint_key,
+        mint: ctx.accounts.mint.key(),
         source: source_owner,
         destination: destination_owner,
-        amount: 0, // amount is not passed to transfer hook
+        amount: 0,
         source_tier: source_kyc.tier,
         destination_tier: dest_kyc.tier,
     });
@@ -68,8 +66,8 @@ fn get_token_account_owner(token_account: &AccountInfo) -> Result<Pubkey> {
     Ok(state.base.owner)
 }
 
-fn validate_kyc_account<'a>(
-    account_info: &'a AccountInfo<'a>,
+fn validate_kyc_account<'b>(
+    account_info: &'b AccountInfo<'b>,
     expected_wallet: Pubkey,
     expected_mint: Pubkey,
     min_tier: u8,

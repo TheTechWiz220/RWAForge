@@ -1811,12 +1811,10 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
- "spl-discriminator 0.5.2",
- "spl-pod 0.2.5",
- "spl-tlv-account-resolution 0.4.0",
+ "spl-discriminator 0.2.5",
+ "spl-tlv-account-resolution 0.6.5",
  "spl-token-2022",
- "spl-token-metadata-interface 0.2.0",
- "spl-transfer-hook-interface 0.4.1",
+ "spl-transfer-hook-interface 0.6.5",
 ]
 
 [[package]]
@@ -2002,12 +2000,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
-name = "solana-define-syscall"
-version = "4.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57e5b1c0bc1d4a4d10c88a4100499d954c09d3fecfae4912c1a074dff68b1738"
-
-[[package]]
 name = "solana-frozen-abi"
 version = "1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2043,12 +2035,6 @@ dependencies = [
  "rustc_version",
  "syn 2.0.117",
 ]
-
-[[package]]
-name = "solana-hash"
-version = "4.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe51db00ac3aa9f950d1e6201a126acfa26e6d81bc4a183ba64ec02effcad883"
 
 [[package]]
 name = "solana-logger"
@@ -2115,12 +2101,6 @@ dependencies = [
  "wasm-bindgen",
  "zeroize",
 ]
-
-[[package]]
-name = "solana-program-error"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f04fa578707b3612b095f0c8e19b66a1233f7c42ca8082fcb3b745afcc0add6"
 
 [[package]]
 name = "solana-sdk"
@@ -2197,17 +2177,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c94a02d486b28f219a4f8f5d7dd93cbfbb93c9f466cb7871c22e50cd5ae9a7a2"
 
 [[package]]
-name = "solana-sha256-hasher"
-version = "3.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db7dc3011ea4c0334aaaa7e7128cb390ecf546b28d412e9bf2064680f57f588f"
-dependencies = [
- "sha2 0.10.9",
- "solana-define-syscall",
- "solana-hash",
-]
-
-[[package]]
 name = "solana-zk-token-sdk"
 version = "1.18.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2271,18 +2240,6 @@ checksum = "210101376962bb22bb13be6daea34656ea1cbc248fce2164b146e39203b55e03"
 dependencies = [
  "bytemuck",
  "solana-program",
- "spl-discriminator-derive 0.2.0",
-]
-
-[[package]]
-name = "spl-discriminator"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e597c5ff9ed7c74a54dbc47bae2f06e4db8c98f4356ad280200dc11878266db1"
-dependencies = [
- "bytemuck",
- "solana-program-error",
- "solana-sha256-hasher",
  "spl-discriminator-derive 0.2.0",
 ]
 

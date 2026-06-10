@@ -95,6 +95,7 @@ pub fn revoke_kyc_handler(ctx: Context<RevokeKyc>) -> Result<()> {
     Ok(())
 }
 
+// === IMPROVED VERSION ===
 #[derive(Accounts)]
 pub struct UpdateMintCompliance<'info> {
     pub authority: Signer<'info>,
@@ -102,9 +103,12 @@ pub struct UpdateMintCompliance<'info> {
     #[account(seeds = [b"hook_config"], bump = hook_config.bump)]
     pub hook_config: Account<'info, HookConfig>,
 
+    /// CHECK: The mint this compliance record belongs to
+    pub mint: UncheckedAccount<'info>,
+
     #[account(
         mut,
-        seeds = [b"mint_compliance", mint_compliance.mint.as_ref()],
+        seeds = [b"mint_compliance", mint.key().as_ref()],
         bump = mint_compliance.bump
     )]
     pub mint_compliance: Account<'info, MintCompliance>,
