@@ -1,9 +1,7 @@
-//! RWAForge Token-2022 transfer hook — KYC, sanctions, tier, and mint-level compliance.
-//!
-//! Must call `initialize_extra_account_meta_list` after setting the transfer hook on a mint.
-//! Token-2022 invokes `execute` on every `transfer` / `transfer_checked`.
+#![allow(unexpected_cfgs)]
 
 use anchor_lang::prelude::*;
+use spl_discriminator::discriminator::SplDiscriminate;
 use spl_transfer_hook_interface::instruction::ExecuteInstruction;
 
 pub mod errors;
@@ -14,12 +12,11 @@ use instructions::*;
 
 declare_id!("RWAHok1111111111111111111111111111111111111");
 
-/// SPL transfer-hook interface discriminator for `Execute` (not Anchor's default).
 const EXECUTE_DISCRIMINATOR: [u8; 8] = ExecuteInstruction::SPL_DISCRIMINATOR;
 
 #[program]
 pub mod rwa_transfer_hook {
-    use super::*;
+    use super::instructions::*;           // <-- changed from `use super::*;`
 
     pub fn initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
         initialize_config_handler(ctx)
@@ -38,13 +35,9 @@ pub mod rwa_transfer_hook {
         initialize_extra_account_meta_list_handler(ctx)
     }
 
-    /// Token-2022 CPI entrypoint — uses SPL interface discriminator.
-    #[instruction(discriminator = EXECUTE_DISCRIMINATOR)]
-    pub fn execute<'info>(
-        ctx: Context<'_, '_, '_, 'info, Execute<'info>>,
-        amount: u64,
-    ) -> Result<()> {
-        execute_handler(ctx, amount)
+    /// Token-2022 transfer hook entrypoint
+    pub fn execute<'info>(ctx: Context<'info, Execute<'info>>) -> Result<()> {
+        execute_handler(ctx)
     }
 
     pub fn register_kyc(

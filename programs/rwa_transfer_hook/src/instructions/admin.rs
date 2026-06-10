@@ -4,14 +4,20 @@ use crate::errors::HookError;
 use crate::state::{HookConfig, KycRecord, MintCompliance, kyc_tier};
 
 #[derive(Accounts)]
+#[instruction(tier: u8, jurisdiction: u16, expires_at: i64)]
 pub struct RegisterKyc<'info> {
+    #[account(mut)]
     pub authority: Signer<'info>,
+
     #[account(seeds = [b"hook_config"], bump = hook_config.bump)]
     pub hook_config: Account<'info, HookConfig>,
+
     /// CHECK: wallet receiving KYC approval
     pub wallet: UncheckedAccount<'info>,
+
     /// CHECK: RWA Token-2022 mint
     pub mint: UncheckedAccount<'info>,
+
     #[account(
         init_if_needed,
         payer = authority,
@@ -20,6 +26,7 @@ pub struct RegisterKyc<'info> {
         bump
     )]
     pub kyc_record: Account<'info, KycRecord>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -56,11 +63,18 @@ pub fn register_kyc_handler(
 #[derive(Accounts)]
 pub struct RevokeKyc<'info> {
     pub authority: Signer<'info>,
+
     #[account(seeds = [b"hook_config"], bump = hook_config.bump)]
     pub hook_config: Account<'info, HookConfig>,
+
+    /// CHECK: wallet whose KYC is being revoked
+    pub wallet: UncheckedAccount<'info>,
+    /// CHECK: RWA Token-2022 mint
+    pub mint: UncheckedAccount<'info>,
+
     #[account(
         mut,
-        seeds = [b"kyc", kyc_record.wallet.as_ref(), kyc_record.mint.as_ref()],
+        seeds = [b"kyc", wallet.key().as_ref(), mint.key().as_ref()],
         bump = kyc_record.bump
     )]
     pub kyc_record: Account<'info, KycRecord>,
@@ -68,12 +82,14 @@ pub struct RevokeKyc<'info> {
 
 pub fn revoke_kyc_handler(ctx: Context<RevokeKyc>) -> Result<()> {
     require_authority(&ctx.accounts.hook_config, &ctx.accounts.authority)?;
-    ctx.accounts.kyc_record.verified = false;
-    ctx.accounts.kyc_record.sanctions_cleared = false;
+
+    let record = &mut ctx.accounts.kyc_record;
+    record.verified = false;
+    record.sanctions_cleared = false;
 
     emit!(KycRevoked {
-        wallet: ctx.accounts.kyc_record.wallet,
-        mint: ctx.accounts.kyc_record.mint,
+        wallet: record.wallet,
+        mint: record.mint,
     });
 
     Ok(())
@@ -82,8 +98,10 @@ pub fn revoke_kyc_handler(ctx: Context<RevokeKyc>) -> Result<()> {
 #[derive(Accounts)]
 pub struct UpdateMintCompliance<'info> {
     pub authority: Signer<'info>,
+
     #[account(seeds = [b"hook_config"], bump = hook_config.bump)]
     pub hook_config: Account<'info, HookConfig>,
+
     #[account(
         mut,
         seeds = [b"mint_compliance", mint_compliance.mint.as_ref()],
@@ -107,13 +125,13 @@ pub fn update_mint_compliance_handler(
         require!(tier <= kyc_tier::QUALIFIED, HookError::InvalidTier);
         compliance.min_tier = tier;
     }
-
     Ok(())
 }
 
 #[derive(Accounts)]
 pub struct SetGlobalPause<'info> {
     pub authority: Signer<'info>,
+
     #[account(mut, seeds = [b"hook_config"], bump = hook_config.bump)]
     pub hook_config: Account<'info, HookConfig>,
 }
@@ -121,6 +139,7 @@ pub struct SetGlobalPause<'info> {
 pub fn set_global_pause_handler(ctx: Context<SetGlobalPause>, paused: bool) -> Result<()> {
     require_authority(&ctx.accounts.hook_config, &ctx.accounts.authority)?;
     ctx.accounts.hook_config.global_pause = paused;
+
     emit!(GlobalPauseUpdated { paused });
     Ok(())
 }

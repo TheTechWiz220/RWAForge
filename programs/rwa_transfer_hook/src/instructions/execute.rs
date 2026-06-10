@@ -1,18 +1,11 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022::spl_token_2022::extension::{
-    BaseStateWithExtensions, StateWithExtensions,
-};
+use anchor_spl::token_2022::spl_token_2022::extension::StateWithExtensions;
 use anchor_spl::token_2022::spl_token_2022::state::Account as TokenAccountState;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::errors::HookError;
 use crate::state::{HookConfig, KycRecord, MintCompliance};
 
-/// SPL Token-2022 transfer hook `Execute` accounts.
-///
-/// Additional accounts resolved via `extra-account-metas` TLV (in order):
-/// 1. source `KycRecord`, 2. destination `KycRecord`,
-/// 3. `HookConfig`, 4. `MintCompliance`
 #[derive(Accounts)]
 pub struct Execute<'info> {
     #[account(token::token_program = token_program, token::mint = mint)]
@@ -20,24 +13,21 @@ pub struct Execute<'info> {
     pub mint: InterfaceAccount<'info, Mint>,
     #[account(token::token_program = token_program, token::mint = mint)]
     pub destination_token: InterfaceAccount<'info, TokenAccount>,
-    /// CHECK: Must match source token account owner
+    /// CHECK: owner of source token account
     pub owner: UncheckedAccount<'info>,
-    /// CHECK: Must match destination token account owner
+    /// CHECK: owner of destination token account
     pub destination_owner: UncheckedAccount<'info>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
-pub fn execute_handler<'info>(
-    ctx: Context<'_, '_, '_, 'info, Execute<'info>>,
-    amount: u64,
-) -> Result<()> {
-    require!(amount > 0, HookError::InvalidAmount);
+pub fn execute_handler<'info>(ctx: Context<'info, Execute<'info>>) -> Result<()> {
+    require!(ctx.remaining_accounts.len() >= 4, HookError::MissingKycAccounts);
 
     let remaining = ctx.remaining_accounts;
-    require!(remaining.len() >= 4, HookError::MissingKycAccounts);
 
-    let hook_config =
-        Account::<HookConfig>::try_from(&remaining[2]).map_err(|_| error!(HookError::InvalidExtraAccountOwner))?;
+    let hook_config = Account::<HookConfig>::try_from(&remaining[2])
+        .map_err(|_| error!(HookError::InvalidExtraAccountOwner))?;
+
     let mint_compliance = Account::<MintCompliance>::try_from(&remaining[3])
         .map_err(|_| error!(HookError::InvalidExtraAccountOwner))?;
 
@@ -48,42 +38,22 @@ pub fn execute_handler<'info>(
     require_keys_eq!(mint_compliance.mint, mint_key, HookError::KycMintMismatch);
 
     let source_owner = get_token_account_owner(&ctx.accounts.source_token.to_account_info())?;
-    let destination_owner =
-        get_token_account_owner(&ctx.accounts.destination_token.to_account_info())?;
+    let destination_owner = get_token_account_owner(&ctx.accounts.destination_token.to_account_info())?;
 
     require_keys_eq!(ctx.accounts.owner.key(), source_owner, HookError::KycWalletMismatch);
-    require_keys_eq!(
-        ctx.accounts.destination_owner.key(),
-        destination_owner,
-        HookError::KycWalletMismatch
-    );
+    require_keys_eq!(ctx.accounts.destination_owner.key(), destination_owner, HookError::KycWalletMismatch);
 
     let min_tier = mint_compliance.min_tier;
     let now = Clock::get()?.unix_timestamp;
 
-    let source_kyc = validate_kyc_account(
-        &remaining[0],
-        source_owner,
-        mint_key,
-        min_tier,
-        now,
-        true,
-    )?;
-
-    let dest_kyc = validate_kyc_account(
-        &remaining[1],
-        destination_owner,
-        mint_key,
-        min_tier,
-        now,
-        false,
-    )?;
+    let source_kyc = validate_kyc_account(&remaining[0], source_owner, mint_key, min_tier, now, true)?;
+    let dest_kyc = validate_kyc_account(&remaining[1], destination_owner, mint_key, min_tier, now, false)?;
 
     emit!(TransferCompliancePassed {
         mint: mint_key,
         source: source_owner,
         destination: destination_owner,
-        amount,
+        amount: 0, // amount is not passed to transfer hook
         source_tier: source_kyc.tier,
         destination_tier: dest_kyc.tier,
     });
@@ -93,13 +63,13 @@ pub fn execute_handler<'info>(
 
 fn get_token_account_owner(token_account: &AccountInfo) -> Result<Pubkey> {
     let data = token_account.try_borrow_data()?;
-    let account = StateWithExtensions::<TokenAccountState>::unpack(&data)
-        .map_err(|_| error!(HookError::InvalidAmount))?;
-    Ok(account.base.owner)
+    let state = StateWithExtensions::<TokenAccountState>::unpack(&data)
+        .map_err(|_| HookError::InvalidTokenAccount)?;
+    Ok(state.base.owner)
 }
 
-fn validate_kyc_account(
-    account_info: &AccountInfo,
+fn validate_kyc_account<'a>(
+    account_info: &'a AccountInfo<'a>,
     expected_wallet: Pubkey,
     expected_mint: Pubkey,
     min_tier: u8,
@@ -132,7 +102,7 @@ fn validate_kyc_account(
         }
     }
 
-    Ok(kyc)
+    Ok(kyc.into_inner())
 }
 
 #[event]
