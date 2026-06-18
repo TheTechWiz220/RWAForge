@@ -20,7 +20,9 @@ pub struct Execute<'info> {
     pub token_program: Interface<'info, TokenInterface>,
 }
 
-pub fn execute_handler<'a>(ctx: Context<'a, 'a, 'a, 'a, Execute<'a>>) -> Result<()> {
+pub fn execute_handler<'info>(
+    ctx: Context<'_, '_, 'info, 'info, Execute<'info>>,
+) -> Result<()> {
     require!(ctx.remaining_accounts.len() >= 4, HookError::MissingKycAccounts);
 
     let remaining = ctx.remaining_accounts;
@@ -33,19 +35,47 @@ pub fn execute_handler<'a>(ctx: Context<'a, 'a, 'a, 'a, Execute<'a>>) -> Result<
 
     require!(!hook_config.global_pause, HookError::GlobalPauseActive);
     require!(mint_compliance.transfers_enabled, HookError::TransfersDisabled);
-    require_keys_eq!(mint_compliance.mint, ctx.accounts.mint.key(), HookError::KycMintMismatch);
+    require_keys_eq!(
+        mint_compliance.mint,
+        ctx.accounts.mint.key(),
+        HookError::KycMintMismatch
+    );
 
     let source_owner = get_token_account_owner(&ctx.accounts.source_token.to_account_info())?;
-    let destination_owner = get_token_account_owner(&ctx.accounts.destination_token.to_account_info())?;
+    let destination_owner =
+        get_token_account_owner(&ctx.accounts.destination_token.to_account_info())?;
 
-    require_keys_eq!(ctx.accounts.owner.key(), source_owner, HookError::KycWalletMismatch);
-    require_keys_eq!(ctx.accounts.destination_owner.key(), destination_owner, HookError::KycWalletMismatch);
+    require_keys_eq!(
+        ctx.accounts.owner.key(),
+        source_owner,
+        HookError::KycWalletMismatch
+    );
+    require_keys_eq!(
+        ctx.accounts.destination_owner.key(),
+        destination_owner,
+        HookError::KycWalletMismatch
+    );
 
     let min_tier = mint_compliance.min_tier;
     let now = Clock::get()?.unix_timestamp;
 
-    let source_kyc = validate_kyc_account(&remaining[0], source_owner, ctx.accounts.mint.key(), min_tier, now, true)?;
-    let dest_kyc = validate_kyc_account(&remaining[1], destination_owner, ctx.accounts.mint.key(), min_tier, now, false)?;
+    let source_kyc = validate_kyc_account(
+        &remaining[0],
+        source_owner,
+        ctx.accounts.mint.key(),
+        min_tier,
+        now,
+        true,
+    )?;
+
+    let dest_kyc = validate_kyc_account(
+        &remaining[1],
+        destination_owner,
+        ctx.accounts.mint.key(),
+        min_tier,
+        now,
+        false,
+    )?;
 
     emit!(TransferCompliancePassed {
         mint: ctx.accounts.mint.key(),
@@ -66,8 +96,8 @@ fn get_token_account_owner(token_account: &AccountInfo) -> Result<Pubkey> {
     Ok(state.base.owner)
 }
 
-fn validate_kyc_account<'b>(
-    account_info: &'b AccountInfo<'b>,
+fn validate_kyc_account<'info>(
+    account_info: &'info AccountInfo<'info>,   // <-- Fixed this line
     expected_wallet: Pubkey,
     expected_mint: Pubkey,
     min_tier: u8,

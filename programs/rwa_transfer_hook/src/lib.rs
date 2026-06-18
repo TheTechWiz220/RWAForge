@@ -1,8 +1,6 @@
 #![allow(unexpected_cfgs)]
 
 use anchor_lang::prelude::*;
-use spl_discriminator::discriminator::SplDiscriminate;
-use spl_transfer_hook_interface::instruction::ExecuteInstruction;
 
 pub mod errors;
 pub mod instructions;
@@ -11,14 +9,6 @@ pub mod state;
 use instructions::*;
 
 declare_id!("RWAHok1111111111111111111111111111111111111");
-
-// Robust way to get [u8; 8] from the slice
-const EXECUTE_DISCRIMINATOR: [u8; 8] = {
-    let slice = ExecuteInstruction::SPL_DISCRIMINATOR_SLICE;
-    let mut arr = [0u8; 8];
-    arr.copy_from_slice(slice);
-    arr
-};
 
 #[program]
 pub mod rwa_transfer_hook {
@@ -41,14 +31,10 @@ pub mod rwa_transfer_hook {
         initialize_extra_account_meta_list_handler(ctx)
     }
 
-        /// Token-2022 transfer hook entrypoint
-        pub fn execute(ctx: Context<Execute>) -> Result<()> {
-            // This local binding forces the expanded Context type for the call
-            let ctx: Context<'_, '_, '_, '_, Execute<'_>> = ctx;
-            execute_handler(ctx)
-        }
-    
-
+    /// Token-2022 transfer hook entrypoint
+    pub fn execute<'info>(ctx: Context<'_, '_, 'info, 'info, Execute<'info>>) -> Result<()> {
+        execute_handler(ctx)
+    }
 
     pub fn register_kyc(
         ctx: Context<RegisterKyc>,
@@ -58,8 +44,6 @@ pub mod rwa_transfer_hook {
     ) -> Result<()> {
         register_kyc_handler(ctx, tier, jurisdiction, expires_at)
     }
-    // ... rest of the functions unchanged
-
 
     pub fn revoke_kyc(ctx: Context<RevokeKyc>) -> Result<()> {
         revoke_kyc_handler(ctx)
