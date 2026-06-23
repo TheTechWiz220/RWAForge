@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AiValuationPanel } from "@/components/tokenize/ai-valuation-panel";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { ASSET_TYPES, type AiAnalysisResult, type TokenizeFormData } from "@/lib/types";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 const INITIAL: TokenizeFormData = {
   name: "",
@@ -35,14 +36,17 @@ export default function TokenizePage() {
   function applyAiSuggestions(result: AiAnalysisResult) {
     setForm((prev) => ({
       ...prev,
-      interestRateBps: result.suggestedYieldBps,
+      name: result.suggestedName || prev.name,
+      symbol: result.suggestedSymbol || prev.symbol,
+      interestRateBps: result.suggestedYieldBps || prev.interestRateBps,
+      description: result.summary || prev.description,
     }));
   }
 
   async function handleTokenize(e: React.FormEvent) {
     e.preventDefault();
     if (!connected || !publicKey) {
-      setError("Connect your wallet to tokenize an asset.");
+      setError("Please connect your wallet first.");
       return;
     }
 
@@ -51,154 +55,157 @@ export default function TokenizePage() {
     setTxSig(null);
 
     try {
-      // Client-side Token-2022 mint creation + program CPI wired in lib/solana/tokenize.ts
       const { tokenizeAsset } = await import("@/lib/solana/tokenize");
       const sig = await tokenizeAsset(form, publicKey);
       setTxSig(sig);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Tokenization failed");
+    } catch (err: any) {
+      setError(err.message || "Failed to tokenize asset");
+      console.error(err);
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Tokenize Asset</h1>
-        <p className="text-muted-foreground mt-1">
-          Create a Token-2022 mint with RWA extensions, AI valuation, and compliance controls.
-        </p>
+    <div className="max-w-5xl mx-auto py-8 px-4">
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Tokenize Real World Asset</h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Create compliant fractional ownership tokens powered by AI
+          </p>
+        </div>
+        <WalletMultiButton />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Asset Details</CardTitle>
-            <CardDescription>Metadata stored on-chain via Token-2022 extensions.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleTokenize} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Asset Name</Label>
-                <Input
-                  id="name"
-                  value={form.name}
-                  onChange={(e) => update("name", e.target.value)}
-                  placeholder="Manhattan Office Tower"
-                  required
-                />
-              </div>
+      <div className="grid gap-8 lg:grid-cols-5">
+        {/* Form */}
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Asset Information</CardTitle>
+              <CardDescription>
+                All metadata will be stored on-chain using Token-2022 extensions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleTokenize} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Asset Name</Label>
+                    <Input
+                      id="name"
+                      value={form.name}
+                      onChange={(e) => update("name", e.target.value)}
+                      placeholder="e.g. Banjul Commercial Property"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="symbol">Symbol</Label>
+                    <Input
+                      id="symbol"
+                      value={form.symbol}
+                      onChange={(e) => update("symbol", e.target.value.toUpperCase())}
+                      placeholder="BJLPROP"
+                      maxLength={10}
+                      required
+                    />
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="symbol">Symbol</Label>
-                <Input
-                  id="symbol"
-                  value={form.symbol}
-                  onChange={(e) => update("symbol", e.target.value.toUpperCase())}
-                  placeholder="MNHTN"
-                  maxLength={10}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="assetType">Asset Type</Label>
-                <select
-                  id="assetType"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  value={form.assetType}
-                  onChange={(e) => update("assetType", Number(e.target.value) as TokenizeFormData["assetType"])}
-                >
-                  {ASSET_TYPES.map((t) => (
-                    <option key={t.id} value={t.id}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={form.description}
-                  onChange={(e) => update("description", e.target.value)}
-                  placeholder="Describe the asset, location, revenue, legal structure..."
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="documentsUri">Documents URI (IPFS/Arweave)</Label>
-                <Input
-                  id="documentsUri"
-                  value={form.documentsUri}
-                  onChange={(e) => update("documentsUri", e.target.value)}
-                  placeholder="https://arweave.net/..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="supply">Total Supply</Label>
-                  <Input
-                    id="supply"
-                    type="number"
-                    min={1}
-                    value={form.totalSupply}
-                    onChange={(e) => update("totalSupply", Number(e.target.value))}
+                  <Label htmlFor="assetType">Asset Type</Label>
+                  <select
+                    id="assetType"
+                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={form.assetType}
+                    onChange={(e) => update("assetType", Number(e.target.value))}
+                  >
+                    {ASSET_TYPES.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={form.description}
+                    onChange={(e) => update("description", e.target.value)}
+                    placeholder="Detailed description, location, revenue model, legal structure..."
+                    rows={5}
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="yield">Yield (bps)</Label>
+                  <Label htmlFor="documentsUri">Documents / Proof of Ownership URI</Label>
                   <Input
-                    id="yield"
-                    type="number"
-                    min={0}
-                    value={form.interestRateBps}
-                    onChange={(e) => update("interestRateBps", Number(e.target.value))}
+                    id="documentsUri"
+                    value={form.documentsUri}
+                    onChange={(e) => update("documentsUri", e.target.value)}
+                    placeholder="https://arweave.net/..."
                   />
                 </div>
-              </div>
 
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="supply">Total Supply</Label>
+                    <Input
+                      id="supply"
+                      type="number"
+                      value={form.totalSupply}
+                      onChange={(e) => update("totalSupply", Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="yield">Annual Yield (bps)</Label>
+                    <Input
+                      id="yield"
+                      type="number"
+                      value={form.interestRateBps}
+                      onChange={(e) => update("interestRateBps", Number(e.target.value))}
+                    />
+                  </div>
+                </div>
 
-              {txSig && (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400 break-all">
-                  Success! Tx: {txSig}
-                </p>
-              )}
-
-              <Button type="submit" disabled={submitting || !connected} className="w-full">
-                {submitting ? (
-                  <>
-                    <LoadingSpinner className="mr-2" />
-                    Tokenizing...
-                  </>
-                ) : (
-                  "Initialize Token-2022 Mint"
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {txSig && (
+                  <p className="text-green-600 text-sm break-all">
+                    ✅ Transaction successful! Signature: {txSig.slice(0, 12)}...
+                  </p>
                 )}
-              </Button>
 
-              {!connected && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Connect wallet to submit on-chain transaction.
-                </p>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+                <Button type="submit" className="w-full" disabled={submitting || !connected} size="lg">
+                  {submitting ? (
+                    <>
+                      <LoadingSpinner className="mr-2 h-4 w-4" />
+                      Creating Token-2022 Mint...
+                    </>
+                  ) : (
+                    "🚀 Tokenize Asset on Solana"
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
 
-        <AiValuationPanel
-          formData={{
-            name: form.name,
-            assetType: form.assetType,
-            description: form.description,
-            documentsUri: form.documentsUri,
-          }}
-          onApplySuggestions={applyAiSuggestions}
-        />
+        {/* AI Valuation Sidebar */}
+        <div className="lg:col-span-2">
+          <AiValuationPanel
+            formData={{
+              name: form.name,
+              assetType: form.assetType,
+              description: form.description,
+              documentsUri: form.documentsUri,
+            }}
+            onApplySuggestions={applyAiSuggestions}
+          />
+        </div>
       </div>
     </div>
   );

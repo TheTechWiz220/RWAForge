@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, AlertTriangle, Shield, TrendingUp } from "lucide-react";
+import { Sparkles, AlertTriangle, Shield, TrendingUp, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
+import { LoadingSpinner } from "@/components/ui/loading";
 import type { AiAnalysisResult, TokenizeFormData } from "@/lib/types";
 import { formatUsd, formatApy } from "@/lib/utils";
 
@@ -20,8 +20,8 @@ export function AiValuationPanel({ formData, onApplySuggestions }: AiValuationPa
   const [result, setResult] = useState<AiAnalysisResult | null>(null);
 
   async function runAnalysis() {
-    if (!formData.description.trim()) {
-      setError("Please provide an asset description for AI analysis.");
+    if (!formData.description?.trim()) {
+      setError("Please provide a detailed asset description first.");
       return;
     }
 
@@ -36,103 +36,133 @@ export function AiValuationPanel({ formData, onApplySuggestions }: AiValuationPa
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Analysis failed");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "AI analysis failed");
       }
 
-      const data = (await res.json()) as AiAnalysisResult;
+      const data: AiAnalysisResult = await res.json();
       setResult(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Card className="border-primary/20">
+    <Card className="sticky top-6 border-primary/20 shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <Sparkles className="h-5 w-5 text-primary" />
-          AI Valuation Engine
+          AI Asset Intelligence
         </CardTitle>
         <CardDescription>
-          Generate valuation, risk assessment, and token pricing suggestions from your asset data.
+          Get professional valuation, risk analysis, and token recommendations instantly.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Button onClick={runAnalysis} disabled={loading} className="w-full sm:w-auto">
+
+      <CardContent className="space-y-5">
+        <Button 
+          onClick={runAnalysis} 
+          disabled={loading || !formData.description?.trim()} 
+          className="w-full" 
+          size="lg"
+        >
           {loading ? (
             <>
-              <LoadingSpinner className="mr-2" />
-              Analyzing asset...
+              <LoadingSpinner className="mr-2 h-4 w-4" />
+              Analyzing with AI...
             </>
           ) : (
             <>
               <Sparkles className="mr-2 h-4 w-4" />
-              Run AI Analysis
+              Run AI Valuation
             </>
           )}
         </Button>
 
         {error && (
-          <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-            {error}
+          <div className="flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+            <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0" />
+            <p className="text-sm">{error}</p>
           </div>
         )}
 
         {result && (
-          <div className="space-y-4 animate-in fade-in duration-300">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Metric label="Est. Valuation" value={formatUsd(result.valuationUsd)} icon={TrendingUp} />
-              <Metric label="Token Price" value={formatUsd(result.suggestedTokenPrice)} icon={Sparkles} />
-              <Metric label="Suggested Yield" value={formatApy(result.suggestedYieldBps)} icon={TrendingUp} />
+          <div className="space-y-6 animate-in fade-in-50 duration-300">
+            {/* Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <MetricCard 
+                icon={TrendingUp} 
+                label="Estimated Value" 
+                value={formatUsd(result.valuationUsd)} 
+              />
+              <MetricCard 
+                icon={Sparkles} 
+                label="Suggested Token Price" 
+                value={formatUsd(result.suggestedTokenPrice)} 
+              />
+              <MetricCard 
+                icon={TrendingUp} 
+                label="Recommended Yield" 
+                value={formatApy(result.suggestedYieldBps)} 
+              />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              <span className="text-sm font-medium">Risk Score:</span>
-              <Badge
-                variant={
-                  result.riskLevel === "low"
-                    ? "success"
-                    : result.riskLevel === "medium"
-                      ? "warning"
-                      : "destructive"
-                }
+            {/* Risk */}
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Risk Assessment</p>
+                  <p className="text-2xl font-semibold">{result.riskScore}/100</p>
+                </div>
+              </div>
+              <Badge 
+                variant={result.riskLevel === "low" ? "default" : result.riskLevel === "medium" ? "secondary" : "destructive"}
+                className="capitalize"
               >
-                {result.riskScore}/100 — {result.riskLevel}
+                {result.riskLevel} Risk
               </Badge>
             </div>
 
-            <p className="text-sm text-muted-foreground leading-relaxed">{result.summary}</p>
+            {/* Summary */}
+            <div>
+              <p className="text-sm font-medium mb-2">AI Summary</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{result.summary}</p>
+            </div>
 
-            {result.keyRisks.length > 0 && (
+            {/* Risks & Compliance */}
+            {result.keyRisks?.length > 0 && (
               <div>
                 <p className="text-sm font-medium mb-2">Key Risks</p>
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  {result.keyRisks.map((r) => (
-                    <li key={r}>{r}</li>
+                <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                  {result.keyRisks.map((risk, i) => (
+                    <li key={i}>{risk}</li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {result.complianceNotes.length > 0 && (
+            {result.complianceNotes?.length > 0 && (
               <div>
                 <p className="text-sm font-medium mb-2">Compliance Notes</p>
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  {result.complianceNotes.map((n) => (
-                    <li key={n}>{n}</li>
+                <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                  {result.complianceNotes.map((note, i) => (
+                    <li key={i}>{note}</li>
                   ))}
                 </ul>
               </div>
             )}
 
             {onApplySuggestions && (
-              <Button variant="secondary" onClick={() => onApplySuggestions(result)}>
-                Apply AI Suggestions
+              <Button 
+                variant="secondary" 
+                className="w-full" 
+                onClick={() => onApplySuggestions(result)}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Apply AI Recommendations to Form
               </Button>
             )}
           </div>
@@ -142,22 +172,18 @@ export function AiValuationPanel({ formData, onApplySuggestions }: AiValuationPa
   );
 }
 
-function Metric({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
+function MetricCard({ icon: Icon, label, value }: { 
+  icon: React.ComponentType<{ className?: string }>; 
+  label: string; 
+  value: string; 
 }) {
   return (
-    <div className="rounded-lg border p-3">
-      <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-        <Icon className="h-3 w-3" />
-        {label}
+    <div className="rounded-xl border bg-card p-4">
+      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+        <Icon className="h-4 w-4" />
+        <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="text-lg font-semibold">{value}</p>
+      <p className="text-2xl font-semibold tracking-tight">{value}</p>
     </div>
   );
 }
