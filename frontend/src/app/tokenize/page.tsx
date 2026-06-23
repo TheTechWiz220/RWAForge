@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,7 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { AiValuationPanel } from "@/components/tokenize/ai-valuation-panel";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { ASSET_TYPES, type AiAnalysisResult, type TokenizeFormData } from "@/lib/types";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { AlertCircle } from "lucide-react";
+
+// Dynamic Wallet Button (prevents hydration mismatch)
+const WalletMultiButton = dynamic(
+  () => import("@solana/wallet-adapter-react-ui").then((mod) => mod.WalletMultiButton),
+  { ssr: false }
+);
 
 const INITIAL: TokenizeFormData = {
   name: "",
@@ -46,7 +53,7 @@ export default function TokenizePage() {
   async function handleTokenize(e: React.FormEvent) {
     e.preventDefault();
     if (!connected || !publicKey) {
-      setError("Please connect your wallet first.");
+      setError("Please connect your wallet to continue.");
       return;
     }
 
@@ -59,7 +66,7 @@ export default function TokenizePage() {
       const sig = await tokenizeAsset(form, publicKey);
       setTxSig(sig);
     } catch (err: any) {
-      setError(err.message || "Failed to tokenize asset");
+      setError(err.message || "Tokenization failed. Please try again.");
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -78,6 +85,17 @@ export default function TokenizePage() {
         <WalletMultiButton />
       </div>
 
+      {!connected && (
+        <Card className="mb-8 border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950">
+          <CardContent className="flex items-center gap-3 py-4">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            <p className="text-sm text-orange-700 dark:text-orange-400">
+              Connect your wallet to tokenize assets and interact with the blockchain.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-5">
         {/* Form */}
         <div className="lg:col-span-3">
@@ -85,7 +103,7 @@ export default function TokenizePage() {
             <CardHeader>
               <CardTitle>Asset Information</CardTitle>
               <CardDescription>
-                All metadata will be stored on-chain using Token-2022 extensions.
+                All data will be stored on-chain using Token-2022 extensions.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -136,13 +154,13 @@ export default function TokenizePage() {
                     id="description"
                     value={form.description}
                     onChange={(e) => update("description", e.target.value)}
-                    placeholder="Detailed description, location, revenue model, legal structure..."
+                    placeholder="Detailed description, location, revenue model..."
                     rows={5}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="documentsUri">Documents / Proof of Ownership URI</Label>
+                  <Label htmlFor="documentsUri">Documents URI (IPFS/Arweave)</Label>
                   <Input
                     id="documentsUri"
                     value={form.documentsUri}
@@ -173,13 +191,19 @@ export default function TokenizePage() {
                 </div>
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
+
                 {txSig && (
                   <p className="text-green-600 text-sm break-all">
                     ✅ Transaction successful! Signature: {txSig.slice(0, 12)}...
                   </p>
                 )}
 
-                <Button type="submit" className="w-full" disabled={submitting || !connected} size="lg">
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={submitting || !connected} 
+                  size="lg"
+                >
                   {submitting ? (
                     <>
                       <LoadingSpinner className="mr-2 h-4 w-4" />
@@ -194,7 +218,7 @@ export default function TokenizePage() {
           </Card>
         </div>
 
-        {/* AI Valuation Sidebar */}
+        {/* AI Panel */}
         <div className="lg:col-span-2">
           <AiValuationPanel
             formData={{
