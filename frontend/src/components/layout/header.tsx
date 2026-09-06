@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Hammer, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -29,23 +29,32 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <Hammer className="h-6 w-6 text-primary" />
-          <span>RWAForge</span>
+        <Link href="/" className="flex items-center gap-2.5 font-bold text-lg tracking-tight">
+          {/* Mark: stylized plot + forge */}
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm shadow-primary/25">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 21h18" />
+              <path d="M5 21V10l7-5 7 5v11" />
+              <path d="M9 21v-6h6v6" />
+            </svg>
+          </span>
+          <span>
+            RWA<span className="text-primary">Forge</span>
+          </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-0.5">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "px-3.5 py-2 rounded-md text-sm font-medium transition-colors",
                 pathname === item.href
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
               )}
             >
               {item.label}
@@ -76,14 +85,14 @@ export function Header() {
       </div>
 
       {mobileOpen && (
-        <nav className="md:hidden border-t px-4 py-3 space-y-1">
+        <nav className="md:hidden border-t px-4 py-3 space-y-1 bg-background/95">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "block px-3 py-2 rounded-md text-sm font-medium",
+                "block px-3 py-2.5 rounded-md text-sm font-medium",
                 pathname === item.href ? "bg-primary/10 text-primary" : "text-muted-foreground"
               )}
             >

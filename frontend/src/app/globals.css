@@ -2,46 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────
+   RWAForge — Coastal Trust design system
+   Primary: deep teal (ocean) · Accent: warm sand/gold
+   ───────────────────────────────────────────── */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-    --radius: 0.625rem;
+    /* Warm off-white / cream surfaces */
+    --background: 40 33% 98%;
+    --foreground: 200 25% 12%;
+
+    --card: 40 40% 99%;
+    --card-foreground: 200 25% 12%;
+
+    /* Deep teal — ocean / trust */
+    --primary: 182 80% 26%;
+    --primary-foreground: 40 33% 98%;
+
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 200 25% 18%;
+
+    --muted: 40 15% 93%;
+    --muted-foreground: 200 10% 42%;
+
+    /* Sand / gold accent */
+    --accent: 38 70% 92%;
+    --accent-foreground: 182 80% 22%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 18% 88%;
+    --input: 40 18% 88%;
+    --ring: 182 80% 26%;
+
+    --radius: 0.75rem;
+
+    /* Brand extras */
+    --sand: 38 72% 67%;
+    --sand-foreground: 200 25% 12%;
+    --ocean: 182 80% 26%;
+    --ocean-light: 182 55% 42%;
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 224 76% 48%;
+    /* Warm charcoal with teal undertone */
+    --background: 200 28% 7%;
+    --foreground: 40 20% 96%;
+
+    --card: 200 24% 10%;
+    --card-foreground: 40 20% 96%;
+
+    --primary: 182 65% 48%;
+    --primary-foreground: 200 28% 8%;
+
+    --secondary: 200 20% 16%;
+    --secondary-foreground: 40 20% 96%;
+
+    --muted: 200 18% 14%;
+    --muted-foreground: 40 10% 62%;
+
+    --accent: 38 40% 18%;
+    --accent-foreground: 38 72% 72%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 18% 16%;
+    --input: 200 18% 16%;
+    --ring: 182 65% 48%;
+
+    --sand: 38 60% 55%;
+    --sand-foreground: 40 20% 96%;
+    --ocean: 182 65% 48%;
+    --ocean-light: 182 50% 58%;
   }
 }
 
@@ -52,6 +87,29 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+/* Subtle horizon gradient for hero sections */
+.hero-horizon {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, hsl(var(--primary) / 0.12), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 90% 10%, hsl(38 72% 67% / 0.08), transparent 45%),
+    hsl(var(--background));
+}
+
+.dark .hero-horizon {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, hsl(var(--primary) / 0.18), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 90% 10%, hsl(38 60% 55% / 0.06), transparent 45%),
+    hsl(var(--background));
+}
+
+/* Soft plot-grid motif (optional decorative) */
+.plot-grid {
+  background-image:
+    linear-gradient(to right, hsl(var(--border) / 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.6) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
 .wallet-adapter-button {
