@@ -35,15 +35,15 @@ export default function HomePage() {
     <div className="space-y-16">
       <section className="text-center space-y-6 py-8 md:py-16">
         <div className="inline-flex items-center rounded-full border px-3 py-1 text-xs text-muted-foreground">
-          Solana Token-2022 · AI-Powered · Production Ready
+          Solana Token-2022 · Gambia Real Estate · AI-Powered
         </div>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight max-w-3xl mx-auto">
-          Forge Real World Assets into{" "}
-          <span className="text-primary">On-Chain Yield</span>
+          Tokenize Gambia Land into{" "}
+          <span className="text-primary">On-Chain Ownership</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          RWAForge tokenizes real estate, invoices, collectibles, and more with
-          compliance-first Token-2022 extensions and AI-driven valuation.
+          RWAForge turns real estate and other real-world assets into compliant
+          Token-2022 tokens with built-in KYC, AI valuation, and USDC marketplace.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild size="lg">
