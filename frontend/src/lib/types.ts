@@ -43,6 +43,8 @@ export interface AiAnalysisResult {
   summary: string;
   complianceNotes: string[];
   keyRisks: string[];
+  suggestedName?: string;
+  suggestedSymbol?: string;
 }
 
 export interface TokenizeFormData {
