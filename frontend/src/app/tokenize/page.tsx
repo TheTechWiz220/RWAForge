@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AiValuationPanel } from "@/components/tokenize/ai-valuation-panel";
 import { LoadingSpinner } from "@/components/ui/loading";
-import { ASSET_TYPES, type AiAnalysisResult, type TokenizeFormData } from "@/lib/types";
+import { ASSET_TYPES, type AiAnalysisResult, type AssetTypeId, type TokenizeFormData } from "@/lib/types";
 import { AlertCircle } from "lucide-react";
 
 // Dynamic Wallet Button (prevents hydration mismatch)
@@ -138,7 +138,7 @@ export default function TokenizePage() {
                     id="assetType"
                     className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={form.assetType}
-                    onChange={(e) => update("assetType", Number(e.target.value))}
+                    onChange={(e) => update("assetType", Number(e.target.value) as AssetTypeId)}
                   >
                     {ASSET_TYPES.map((type) => (
                       <option key={type.id} value={type.id}>
