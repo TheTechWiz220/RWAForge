@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Shield, Sparkles, Zap, Building2, MapPin } from "lucide-react";
+import { ArrowRight, Shield, Sparkles, Zap, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListingCard } from "@/components/marketplace/listing-card";
+import { CoastalHero } from "@/components/hero/coastal-hero";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
 
 const FEATURES = [
@@ -36,77 +37,42 @@ export default function HomePage() {
   const featured = DEMO_LISTINGS.slice(0, 3);
 
   return (
-    <div className="space-y-20 pb-16">
-      {/* Hero */}
-      <section className="hero-horizon relative -mx-4 px-4 md:-mx-0 md:px-0">
-        <div className="text-center space-y-7 py-12 md:py-20 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-medium text-primary">
-            <MapPin className="h-3.5 w-3.5" />
-            Solana · Gambia Real Estate · Token-2022
-          </div>
-
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1]">
-            Tokenize Gambia Land into{" "}
-            <span className="text-primary">On-Chain Ownership</span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Turn freehold and leasehold plots into compliant Token-2022 assets —
-            with AI valuation, KYC transfer hooks, and a USDC marketplace.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button asChild size="lg" className="shadow-md shadow-primary/20">
-              <Link href="/tokenize">
-                Tokenize a Plot
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="border-primary/25 hover:bg-primary/5">
-              <Link href="/explore">Explore Listings</Link>
-            </Button>
-          </div>
-
-          {/* Trust strip */}
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-6 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-              SPV-backed economic interest
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--sand))]" />
-              KYC transfer compliance
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-              Devnet preview
-            </span>
-          </div>
-        </div>
-      </section>
+    <div className="space-y-20 md:space-y-28 pb-20">
+      <CoastalHero />
 
       {/* Features */}
       <section>
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <p className="text-sm font-medium text-primary mb-1">Platform</p>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Built for land RWAs</h2>
-          </div>
+        <div className="mb-10 max-w-xl">
+          <p className="text-sm font-semibold tracking-wide uppercase text-primary mb-2">
+            Platform
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Built for land as a real-world asset
+          </h2>
+          <p className="mt-3 text-muted-foreground leading-relaxed">
+            From title structure to on-chain compliance — designed for Gambia
+            freehold, leasehold, and development plots.
+          </p>
         </div>
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((f) => (
+          {FEATURES.map((f, i) => (
             <Card
               key={f.title}
-              className="border-border/80 bg-card/80 transition-all hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"
+              className="group relative overflow-hidden border-border/70 bg-card/90 transition-all duration-300 hover:-translate-y-1 hover:border-primary/35 hover:shadow-xl hover:shadow-primary/10"
+              style={{ animationDelay: `${i * 60}ms` }}
             >
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="pb-2">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <f.icon className="h-5 w-5" />
                 </div>
                 <CardTitle className="text-base">{f.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {f.description}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -115,22 +81,54 @@ export default function HomePage() {
 
       {/* Featured listings */}
       <section>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <p className="text-sm font-medium text-primary mb-1">Marketplace</p>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Featured Gambia plots</h2>
+            <p className="text-sm font-semibold tracking-wide uppercase text-primary mb-2">
+              Marketplace
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Featured Gambia plots
+            </h2>
+            <p className="mt-2 text-muted-foreground text-sm md:text-base">
+              Demo listings — Kololi, Bijilo, and Brikama. On-chain when Phase 1 is live.
+            </p>
           </div>
-          <Button asChild variant="ghost" className="text-primary hover:text-primary hover:bg-primary/10">
+          <Button
+            asChild
+            variant="outline"
+            className="border-primary/25 text-primary hover:bg-primary/10 shrink-0"
+          >
             <Link href="/marketplace">
-              View all
+              View all listings
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
           </Button>
         </div>
+
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {featured.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}
+        </div>
+      </section>
+
+      {/* Bottom CTA */}
+      <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-[hsl(var(--sand))]/10 px-6 py-12 md:px-12 md:py-16 text-center">
+        <div className="absolute inset-0 plot-grid opacity-40 pointer-events-none" />
+        <div className="relative max-w-2xl mx-auto space-y-5">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Ready to bring your plot on-chain?
+          </h2>
+          <p className="text-muted-foreground">
+            Start with AI-assisted valuation and a Token-2022 mint flow. Full compliance
+            and marketplace settle in the next phases.
+          </p>
+          <Button asChild size="lg" className="shadow-md shadow-primary/20">
+            <Link href="/tokenize">
+              Start tokenization
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </section>
     </div>

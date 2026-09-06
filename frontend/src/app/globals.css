@@ -9,14 +9,12 @@
 
 @layer base {
   :root {
-    /* Warm off-white / cream surfaces */
     --background: 40 33% 98%;
     --foreground: 200 25% 12%;
 
     --card: 40 40% 99%;
     --card-foreground: 200 25% 12%;
 
-    /* Deep teal — ocean / trust */
     --primary: 182 80% 26%;
     --primary-foreground: 40 33% 98%;
 
@@ -26,7 +24,6 @@
     --muted: 40 15% 93%;
     --muted-foreground: 200 10% 42%;
 
-    /* Sand / gold accent */
     --accent: 38 70% 92%;
     --accent-foreground: 182 80% 22%;
 
@@ -39,7 +36,6 @@
 
     --radius: 0.75rem;
 
-    /* Brand extras */
     --sand: 38 72% 67%;
     --sand-foreground: 200 25% 12%;
     --ocean: 182 80% 26%;
@@ -47,7 +43,6 @@
   }
 
   .dark {
-    /* Warm charcoal with teal undertone */
     --background: 200 28% 7%;
     --foreground: 40 20% 96%;
 
@@ -89,27 +84,23 @@
   }
 }
 
-/* Subtle horizon gradient for hero sections */
-.hero-horizon {
-  background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, hsl(var(--primary) / 0.12), transparent 55%),
-    radial-gradient(ellipse 80% 50% at 90% 10%, hsl(38 72% 67% / 0.08), transparent 45%),
-    hsl(var(--background));
-}
-
-.dark .hero-horizon {
-  background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, hsl(var(--primary) / 0.18), transparent 55%),
-    radial-gradient(ellipse 80% 50% at 90% 10%, hsl(38 60% 55% / 0.06), transparent 45%),
-    hsl(var(--background));
-}
-
-/* Soft plot-grid motif (optional decorative) */
+/* Soft plot-grid motif */
 .plot-grid {
   background-image:
-    linear-gradient(to right, hsl(var(--border) / 0.6) 1px, transparent 1px),
-    linear-gradient(to bottom, hsl(var(--border) / 0.6) 1px, transparent 1px);
+    linear-gradient(to right, hsl(var(--border) / 0.7) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.7) 1px, transparent 1px);
   background-size: 48px 48px;
+}
+
+/* Reduced motion safety for any future CSS animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .wallet-adapter-button {
